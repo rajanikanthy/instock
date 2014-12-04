@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
 @Configuration
-@EnableTransactionManagement
 @EnableJpaRepositories
 public class InStockContextConfiguration {
 
@@ -40,9 +39,6 @@ public class InStockContextConfiguration {
 
 	@Autowired
 	private DataSource dataSource;
-
-	@Autowired
-	private EntityManagerFactory entityManagerFactory;
 
 	@Bean
 	public Properties propertiesFactory() throws IOException {
@@ -68,9 +64,9 @@ public class InStockContextConfiguration {
 	}
 
 	@Bean
-	public PlatformTransactionManager transactionManager() {
+	public PlatformTransactionManager transactionManager() throws Exception {
 		JpaTransactionManager txManager = new JpaTransactionManager();
-		txManager.setEntityManagerFactory(this.entityManagerFactory);
+		txManager.setEntityManagerFactory(entityManagerFactory().getObject());
 		txManager.setDataSource(this.dataSource);
 		return txManager;
 	}
@@ -90,38 +86,17 @@ public class InStockContextConfiguration {
 		return dataSource;
 	}
 	
-	@Bean(name = "batchDataSource")
-	public DataSource batchDataSource() throws IOException, Exception {
-		Properties properties = propertiesFactory();
-		ComboPooledDataSource dataSource = new ComboPooledDataSource();
-		dataSource.setDriverClass(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_DRIVERCLASS.getName()));
-		dataSource.setJdbcUrl(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_JDBC_URL.getName()));
-		dataSource.setUser(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_USER.getName()));
-		dataSource.setPassword(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_PASSWORD.getName()));
-		dataSource.setMaxPoolSize(Integer.parseInt(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_MAXPOOLSIZE.getName())));
-		dataSource.setAcquireIncrement(Integer.parseInt(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_ACQUIREINCREMENTS.getName())));
-		dataSource.setMaxStatements(Integer.parseInt(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_MAXSTATEMENTS.getName())));
-		dataSource.setMaxStatements(Integer.parseInt(properties.getProperty(ConfigurationConstants.INSTOCK_BATCH_DS_MINPOOLSIZE.getName())));
-		return dataSource;
-	}
-
 	@Bean
 	public SimpleDateFormat simpleDateFormat() {
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 		return simpleDateFormat;
 	}
 	
-	@Bean(name = "batchTransactionManager")
-	public ResourcelessTransactionManager batchTransactionManager() {
-		ResourcelessTransactionManager transactionManager = new ResourcelessTransactionManager();
-		return transactionManager;
-	}
-	
 	@Bean
 	public JobRepository jobRepository() throws Exception {
 		JobRepositoryFactoryBean jobRepositoryFactoryBean = new JobRepositoryFactoryBean();
-		jobRepositoryFactoryBean.setDataSource(batchDataSource());
-		jobRepositoryFactoryBean.setTransactionManager(batchTransactionManager());
+		jobRepositoryFactoryBean.setDataSource(dataSource());
+		//jobRepositoryFactoryBean.setTransactionManager(batchTransactionManager());
 		return jobRepositoryFactoryBean.getJobRepository();
 	}
 	

@@ -9,6 +9,7 @@
     <jaxrs:server id="services" address="/">
         <jaxrs:serviceBeans>
             <bean class="com.internal.stocks.services.TimeService"/>
+            <bean class="com.internal.stocks.services.SymbolImportService" />
         </jaxrs:serviceBeans>
         <jaxrs:providers>
             <bean class="org.codehaus.jackson.jaxrs.JacksonJsonProvider"/>
